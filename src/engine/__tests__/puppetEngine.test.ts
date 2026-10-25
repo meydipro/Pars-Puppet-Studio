@@ -18,7 +18,7 @@ import {
   sampleSurroundingMouthSkinColor,
 } from '../mouthPenGeometry';
 import { buildPuppetMesh } from '../meshBuilder';
-import { rasterizeMeshSoftware } from '../renderer';
+import { computeCharacterRect, rasterizeMeshSoftware } from '../renderer';
 import {
   bakePresetToKeyframes,
   deformPuppetMesh,
@@ -637,6 +637,64 @@ describe('Puppet Studio Engine — Comprehensive Verification', () => {
     expect(yCenter).toBeLessThan(yBelow);
     expect(yAbove).toBeGreaterThanOrEqual(upperMidY - 1e-4);
     expect(yBelow).toBeLessThanOrEqual(lowerMidY + 1e-4);
+  });
+
+  it('pulls clipped character heads into the stage frame via mouse offset and repositions body pins with zero body distortion', () => {
+    // 1. At scale 1.25, top of character rect is above canvas (y < 0); dragging down (offsetY = +0.18) brings head inside (y > 0)
+    const clippedRect = computeCharacterRect(500, 500, 400, 500, 1.25, false, 0, 0);
+    expect(clippedRect.y).toBeLessThan(0);
+
+    const pulledDownRect = computeCharacterRect(
+      500,
+      500,
+      400,
+      500,
+      1.25,
+      false,
+      0,
+      0.18
+    );
+    expect(pulledDownRect.y).toBeGreaterThan(20);
+
+    // 2. Repositioning pins on the body (head, shoulders, hands, chest) leaves 100% of body vertices untouched at rest
+    const { rgba, width, height } = createTestCharacterBuffer(false);
+    const landmarks = analyzeCharacterSilhouette(rgba, width, height);
+    const baseRig = buildAutoRigFromLandmarks(landmarks, 'fullBody');
+
+    const movedRig = {
+      ...baseRig,
+      joints: baseRig.joints.map((j) =>
+        j.id === 'head' || j.id === 'l_shoulder' || j.id === 'r_hand'
+          ? { ...j, rest: { x: j.rest.x + 0.04, y: j.rest.y + 0.05 } }
+          : j
+      ),
+    };
+
+    const movedMesh = buildPuppetMesh(rgba, width, height, movedRig);
+    const neutralSettings: AnimationSettings = {
+      presetId: 'custom_only',
+      duration: 2.0,
+      fps: 20,
+      speed: 1.0,
+      bodyIntensity: 1.0,
+      mouthIntensity: 1.0,
+      springiness: 1.0,
+      talkOverlay: false,
+      mouthStyle: 'cutout_jaw',
+      dialogueText: '',
+      showSpeechBubble: false,
+      speechBubblePos: 'top-right',
+      pingPong: false,
+    };
+
+    const restPose = evaluatePuppetPose(movedRig, neutralSettings, 0);
+    deformPuppetMesh(movedMesh, movedRig, restPose, neutralSettings);
+
+    for (let i = 0; i < movedMesh.vertexCount * 2; i++) {
+      expect(
+        Math.abs(movedMesh.deformedPositions[i] - movedMesh.restPositions[i])
+      ).toBeLessThan(1e-6);
+    }
   });
 });
 

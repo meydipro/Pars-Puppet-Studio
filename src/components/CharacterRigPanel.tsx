@@ -313,6 +313,27 @@ export const CharacterRigPanel: React.FC<CharacterRigPanelProps> = ({
                     : 'رسم دقیق خط دهان با ابزار Pen'}
                 </span>
               </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  onChangeToolMode(
+                    toolMode === 'setup_rig' ? 'animate' : 'setup_rig'
+                  )
+                }
+                className={`w-full py-2 px-3 rounded-lg text-xs font-bold border flex items-center justify-center gap-1.5 transition ${
+                  toolMode === 'setup_rig'
+                    ? 'bg-sky-400 text-slate-950 border-sky-300 shadow'
+                    : 'bg-sky-500/15 hover:bg-sky-500/25 text-sky-200 border-sky-500/35'
+                }`}
+              >
+                <Crosshair className="w-3.5 h-3.5" />
+                <span>
+                  {toolMode === 'setup_rig'
+                    ? 'پایان تنظیم پین‌ها و پخش انیمیشن'
+                    : 'جابه‌جایی پین‌ها روی بدن (بدون تغییر بدن)'}
+                </span>
+              </button>
             </div>
 
             {/* Ready Sample Characters */}
@@ -392,7 +413,7 @@ export const CharacterRigPanel: React.FC<CharacterRigPanelProps> = ({
                       : 'bg-studio-900 text-slate-300 border-studio-700 hover:bg-studio-800'
                   }`}
                 >
-                  پین و دهان
+                  جابه‌جایی پین
                 </button>
                 <button
                   type="button"
@@ -408,10 +429,10 @@ export const CharacterRigPanel: React.FC<CharacterRigPanelProps> = ({
               </div>
               <p className="text-[11px] text-slate-400 leading-relaxed">
                 {toolMode === 'pen_mouth'
-                  ? 'دور دهان کج یا ناهموار کاراکتر نقطه بگذارید و روی نقطه سبز اول ببندید تا فک دقیقاً طبق شکل لب باز شود!'
+                  ? 'دور دهان کج یا ناهموار کاراکتر نقطه بگذارید تا فک دقیقاً طبق شکل لب باز شود!'
                   : toolMode === 'setup_rig'
-                  ? 'در این حالت دهان یا پین‌ها را روی دست و سر و پا قرار دهید.'
-                  : 'در این حالت انیمیشن پخش می‌شود و می‌توانید با ماوس دست و سر کاراکتر را زنده حرکت دهید!'}
+                  ? 'بدن قفل است: هر پین را بدون دستکاری یا کشیدگی بدن دقیقاً روی سر، دست یا تنه بگذارید.'
+                  : 'انیمیشن فعال است: کشیدن فضای خالی با ماوس تصویر را جابه‌جا می‌کند (Shift+کشیدن پین = تغییر جای پین بدون کشیدگی بدن).'}
               </p>
             </div>
 
@@ -748,8 +769,30 @@ export const CharacterRigPanel: React.FC<CharacterRigPanelProps> = ({
               )}
             </div>
 
-            {/* Character Scale & Ground Shadow */}
+            {/* Character Scale, Framing Offset & Ground Shadow */}
             <div className="rounded-xl bg-studio-850 border border-studio-700/80 p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-200">
+                  اندازه و جایگاه سوژه در کادر
+                </span>
+                {(Math.abs(stageSettings.characterOffsetX ?? 0) > 0.005 ||
+                  Math.abs(stageSettings.characterOffsetY ?? 0) > 0.005) && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onUpdateStageSettings({
+                        characterOffsetX: 0,
+                        characterOffsetY: 0,
+                      })
+                    }
+                    className="text-[11px] text-amber-300 hover:text-amber-200 flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    وسط‌چین
+                  </button>
+                )}
+              </div>
+
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-slate-300">
                   <span>اندازه کاراکتر در کادر</span>
@@ -757,12 +800,54 @@ export const CharacterRigPanel: React.FC<CharacterRigPanelProps> = ({
                 </div>
                 <input
                   type="range"
-                  min={50}
-                  max={115}
+                  min={45}
+                  max={130}
                   value={Math.round(stageSettings.characterScale * 100)}
                   onChange={(e) =>
                     onUpdateStageSettings({
                       characterScale: Number(e.target.value) / 100,
+                    })
+                  }
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-slate-400">
+                  <span>جابه‌جایی عمودی (پایین / بالا)</span>
+                  <span className="font-mono text-slate-200">
+                    {Math.round((stageSettings.characterOffsetY ?? 0) * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={-60}
+                  max={60}
+                  value={Math.round((stageSettings.characterOffsetY ?? 0) * 100)}
+                  onChange={(e) =>
+                    onUpdateStageSettings({
+                      characterOffsetY: Number(e.target.value) / 100,
+                    })
+                  }
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex justify-between text-[11px] text-slate-400">
+                  <span>جابه‌جایی افقی (چپ / راست)</span>
+                  <span className="font-mono text-slate-200">
+                    {Math.round((stageSettings.characterOffsetX ?? 0) * 100)}%
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min={-60}
+                  max={60}
+                  value={Math.round((stageSettings.characterOffsetX ?? 0) * 100)}
+                  onChange={(e) =>
+                    onUpdateStageSettings({
+                      characterOffsetX: Number(e.target.value) / 100,
                     })
                   }
                   className="w-full"

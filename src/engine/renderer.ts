@@ -28,7 +28,9 @@ export function computeCharacterRect(
   imgW: number,
   imgH: number,
   characterScale = 0.86,
-  hasSpeechBubble = false
+  hasSpeechBubble = false,
+  offsetX = 0,
+  offsetY = 0
 ): CharacterRect {
   const safeImgW = Math.max(1, imgW);
   const safeImgH = Math.max(1, imgH);
@@ -36,10 +38,10 @@ export function computeCharacterRect(
   const fit = Math.min(stageW / safeImgW, stageH / safeImgH) * scaleMul;
   const w = safeImgW * fit;
   const h = safeImgH * fit;
-  const x = (stageW - w) * 0.5;
-  const y = hasSpeechBubble
-    ? (stageH - h) * 0.66
-    : (stageH - h) * 0.54;
+  const x = (stageW - w) * 0.5 + offsetX * stageW;
+  const y =
+    (hasSpeechBubble ? (stageH - h) * 0.66 : (stageH - h) * 0.54) +
+    offsetY * stageH;
   return { x, y, w, h };
 }
 
@@ -507,7 +509,9 @@ export function renderSceneFrame(params: {
     imgW,
     imgH,
     stageSettings.characterScale,
-    hasBubble
+    hasBubble,
+    stageSettings.characterOffsetX ?? 0,
+    stageSettings.characterOffsetY ?? 0
   );
   const cam =
     !exportMode && viewportCamera
@@ -568,6 +572,23 @@ export function renderSceneFrame(params: {
 
   // 6. Viewport Editor Overlays (NEVER drawn during GIF export!)
   if (!exportMode) {
+    if (
+      Math.abs(cam.zoom - 1) > 0.02 ||
+      Math.abs(cam.panX) > 2 ||
+      Math.abs(cam.panY) > 2
+    ) {
+      const fx = stageW * 0.5 + (0 - stageW * 0.5) * cam.zoom + cam.panX;
+      const fy = stageH * 0.5 + (0 - stageH * 0.5) * cam.zoom + cam.panY;
+      const fw = stageW * cam.zoom;
+      const fh = stageH * cam.zoom;
+      ctx.save();
+      ctx.setLineDash([6, 5]);
+      ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(fx, fy, fw, fh);
+      ctx.restore();
+    }
+
     if (showWireframe) {
       drawMeshWireframe(ctx, mesh, charRect);
     }

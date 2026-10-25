@@ -172,6 +172,8 @@ export const App: React.FC = () => {
     stickerColor: '#ffffff',
     stickerWidth: 6,
     characterScale: 0.86,
+    characterOffsetX: 0,
+    characterOffsetY: 0,
   });
 
   // Playback & Live Puppeteering state
@@ -568,6 +570,33 @@ export const App: React.FC = () => {
     (finalRig: PuppetRig) => {
       const hadCustom = Boolean(committedRig.mouth.customPath);
       const hasCustomNow = Boolean(finalRig.mouth.customPath);
+
+      // Clear any leftover live deformation offsets on pins whose rest position was moved!
+      const movedIds = new Set<string>();
+      for (const j of finalRig.joints) {
+        const prevJ = committedRig.joints.find((p) => p.id === j.id);
+        if (
+          prevJ &&
+          (Math.abs(prevJ.rest.x - j.rest.x) > 1e-4 ||
+            Math.abs(prevJ.rest.y - j.rest.y) > 1e-4)
+        ) {
+          movedIds.add(j.id);
+        }
+      }
+      if (movedIds.size > 0) {
+        setLiveJointOffsets((prev) => {
+          let changed = false;
+          const next = { ...prev };
+          for (const id of movedIds) {
+            if (id in next) {
+              delete next[id];
+              changed = true;
+            }
+          }
+          return changed ? next : prev;
+        });
+      }
+
       pushHistory();
       setDraftRig(null);
       setCommittedRig(finalRig);
@@ -577,7 +606,7 @@ export const App: React.FC = () => {
         );
       }
     },
-    [committedRig.mouth.customPath, pushHistory, showToast]
+    [committedRig, pushHistory, showToast]
   );
 
   const handleAddCustomPinAt = useCallback(
@@ -1060,6 +1089,9 @@ export const App: React.FC = () => {
             rig={activeRig}
             animSettings={animSettings}
             stageSettings={stageSettings}
+            onUpdateStageSettings={(patch) =>
+              setStageSettings((prev) => ({ ...prev, ...patch }))
+            }
             toolMode={toolMode}
             onChangeToolMode={setToolMode}
             normTime={normTime}
@@ -1069,10 +1101,14 @@ export const App: React.FC = () => {
             onUpdateLiveJointOffset={(jid, off) =>
               setLiveJointOffsets((prev) => ({ ...prev, [jid]: off }))
             }
+            onClearLiveJointOffsets={() => setLiveJointOffsets({})}
             onFinishLiveJointDrag={handleFinishLiveJointDrag}
             liveMouthOverride={effectiveLiveMouth}
             selectedJointId={selectedJointId}
             onSelectJoint={setSelectedJointId}
+            onToggleJointPinned={handleToggleJointPinned}
+            onDeleteCustomJoint={handleDeleteCustomJoint}
+            onAutoResetRig={handleAutoResetRig}
             onPreviewRigDraft={setDraftRig}
             onCommitRigDraft={handleCommitRigDraft}
             onAddCustomPinAt={handleAddCustomPinAt}

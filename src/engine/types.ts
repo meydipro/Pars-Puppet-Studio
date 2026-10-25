@@ -173,6 +173,10 @@ export interface StageSettings {
   stickerColor: string;
   stickerWidth: number; // px in source image space (e.g., 6)
   characterScale: number; // 0.5 .. 1.4
+  /** Horizontal subject offset inside stage frame [-0.8..0.8] (fraction of stage width) */
+  characterOffsetX?: number;
+  /** Vertical subject offset inside stage frame [-0.8..0.8] (fraction of stage height) */
+  characterOffsetY?: number;
 }
 
 export interface PuppetMesh {
