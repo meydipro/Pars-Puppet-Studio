@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+    background-color: #090b10;
+    color: #f1f5f9;
+  }
+}
+
+/* Checkerboard pattern for transparent stage preview */
+.bg-checkerboard {
+  background-color: #131722;
+  background-image:
+    linear-gradient(45deg, #1c2233 25%, transparent 25%),
+    linear-gradient(-45deg, #1c2233 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1c2233 75%),
+    linear-gradient(-45deg, transparent 75%, #1c2233 75%);
+  background-size: 24px 24px;
+  background-position: 0 0, 0 12px, 12px -12px, -12px 0px;
+}
+
+.bg-checkerboard-light {
+  background-color: #e2e8f0;
+  background-image:
+    linear-gradient(45deg, #cbd5e1 25%, transparent 25%),
+    linear-gradient(-45deg, #cbd5e1 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #cbd5e1 75%),
+    linear-gradient(-45deg, transparent 75%, #cbd5e1 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+}
+
+/* Custom sleek studio range slider */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type='range']::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #252d42;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #818cf8;
+  border: 2px solid #e0e7ff;
+  margin-top: -5px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+  transition: transform 0.12s ease, background-color 0.12s ease;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  background: #6366f1;
+}
+
+input[type='range']::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: #252d42;
+}
+
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #818cf8;
+  border: 2px solid #e0e7ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0f1219;
+}
+::-webkit-scrollbar-thumb {
+  background: #252d42;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3b4768;
+}

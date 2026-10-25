@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+.npm/
+
+# Production build & caches
+dist/
+build/
+out/
+.vite/
+.cache/
+*.tsbuildinfo
+
+# Test & coverage artifacts
+coverage/
+
+# Environment & OS files
+.env
+.env.local
+.env.*.local
+.DS_Store
+Thumbs.db
+
+# Editor directories
+.vscode/*
+!.vscode/extensions.json
+.idea/
