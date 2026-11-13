@@ -37,6 +37,8 @@ interface CharacterRigPanelProps {
   onOpenCropModal: () => void;
   isCropActive: boolean;
   onResetCrop: () => void;
+  onOpenPartsEditor: () => void;
+  partCount: number;
 
   rig: PuppetRig;
   onChangeRigMode: (mode: RigMode) => void;
@@ -71,6 +73,8 @@ export const CharacterRigPanel: React.FC<CharacterRigPanelProps> = ({
   onOpenCropModal,
   isCropActive,
   onResetCrop,
+  onOpenPartsEditor,
+  partCount,
   rig,
   onChangeRigMode,
   onAutoResetRig,
@@ -163,6 +167,9 @@ export const CharacterRigPanel: React.FC<CharacterRigPanelProps> = ({
               </span>
             </label>
 
+            <button type="button" onClick={onOpenPartsEditor} className="w-full flex items-center justify-center gap-2 rounded-xl bg-indigo-600/20 border border-indigo-400/50 hover:bg-indigo-600/30 p-3 text-xs font-bold text-indigo-100">
+              <Layers className="w-4 h-4" /> جداسازی اجزا و انیمیشن ({partCount})
+            </button>
             {/* Image Crop & Rotate Card */}
             <div className="rounded-xl bg-studio-850 border border-studio-700/80 p-3 space-y-2">
               <div className="flex items-center justify-between">

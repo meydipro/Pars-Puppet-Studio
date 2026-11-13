@@ -1,3 +1,4 @@
+import { drawImageParts, PreparedPart } from './parts';
 import {
   buildAnimatedCustomMouthPolygons,
   compileCustomMouth,
@@ -439,6 +440,8 @@ export function renderSceneFrame(params: {
   hoveredPenVertIdx?: number | null;
   penTargetKind?: 'seam' | 'polygon';
   mouthSkinColor?: string | null;
+  imageParts?: PreparedPart[];
+  partTime?: number;
   viewportCamera?: { zoom: number; panX: number; panY: number };
 }): CharacterRect {
   const {
@@ -464,6 +467,8 @@ export function renderSceneFrame(params: {
     penTargetKind = 'seam',
     mouthSkinColor = null,
     viewportCamera,
+    imageParts = [],
+    partTime = 0,
   } = params;
 
   ctx.clearRect(0, 0, stageW, stageH);
@@ -555,6 +560,8 @@ export function renderSceneFrame(params: {
   } else if (animSettings.mouthStyle === 'cartoon_viseme') {
     drawCartoonVisemeMouth(ctx, charRect, rig, pose, mouthSkinColor);
   }
+
+  drawImageParts(ctx, charRect, imageParts, rig, pose, partTime);
 
   // 5. Optional Animated Speech Bubble
   if (hasBubble) {

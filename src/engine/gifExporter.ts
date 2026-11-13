@@ -1,3 +1,4 @@
+import { PreparedPart } from './parts';
 import { encodeFramesToGifBytes } from './gifCore';
 import type { GifWorkerRequest, GifWorkerResponse } from './gif.worker';
 import {
@@ -27,6 +28,8 @@ export interface GifExportResult {
 
 export async function renderAndExportGif(params: {
   rgba: Uint8ClampedArray;
+  baseRgba: Uint8ClampedArray;
+  imageParts: PreparedPart[];
   imgW: number;
   imgH: number;
   mesh: PuppetMesh;
@@ -41,6 +44,8 @@ export async function renderAndExportGif(params: {
 }): Promise<GifExportResult> {
   const {
     rgba,
+    baseRgba,
+    imageParts,
     imgW,
     imgH,
     mesh,
@@ -66,7 +71,7 @@ export async function renderAndExportGif(params: {
 
   // Build dedicated offscreen renderer & canvas so live viewport is never disturbed
   const exportRenderer = new PuppetMeshRenderer();
-  exportRenderer.setTexture(rgba, imgW, imgH);
+  exportRenderer.setTexture(baseRgba, imgW, imgH);
 
   // Clone mesh deformedPositions so live viewport doesn't flicker during export
   const exportMesh: PuppetMesh = {
@@ -125,6 +130,8 @@ export async function renderAndExportGif(params: {
       animSettings,
       stageSettings: exportStageSettings,
       mouthSkinColor,
+      imageParts,
+      partTime: u,
       exportMode: true,
     });
 

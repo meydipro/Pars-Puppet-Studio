@@ -1,3 +1,4 @@
+import { PreparedPart } from '../engine/parts';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Check,
@@ -79,6 +80,7 @@ interface StageViewportProps {
   onAddCustomPinAt: (normPos: Vec2) => void;
   onDropImageFile: (file: File) => void;
   mouthSkinColor?: string | null;
+  imageParts: PreparedPart[];
 }
 
 function applyCustomMouthToRig(
@@ -146,6 +148,7 @@ export const StageViewport: React.FC<StageViewportProps> = ({
   onAddCustomPinAt,
   onDropImageFile,
   mouthSkinColor = null,
+  imageParts,
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -538,11 +541,14 @@ export const StageViewport: React.FC<StageViewportProps> = ({
       hoveredPenVertIdx,
       penTargetKind,
       mouthSkinColor,
+      imageParts,
+      partTime: isStaticSetupPose ? 0 : normTime,
       viewportCamera: camera,
     });
 
     latestCharRectRef.current = rect;
   }, [
+    imageParts,
     canvasSize,
     imgW,
     imgH,
