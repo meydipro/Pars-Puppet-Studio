@@ -18,6 +18,12 @@
 - **Interactive Crop, Rotate & Flip Modal:** Drag handles, aspect-ratio presets (`Free`, `1:1`, `4:5`, `16:9`), `90°` CW/CCW rotation, horizontal/vertical mirroring, and **1-click Smart Subject Auto-Trim** with non-destructive reset at any time.
 - **Flood-Fill Background Removal & Sticker Outlines:** Border-seeded flood-fill background extraction with edge color-spill decontamination (preserving interior white highlights such as eye reflections), plus an $O(W \times H)$ two-pass Chamfer distance transform for crisp sticker borders.
 
+### Manual Image Parts & Independent Motion
+- Open **جداسازی اجزا و انیمیشن** in the character tab after importing, cropping and optionally removing the background. Click at least three points around a region and choose **ساخت جزء**; select a part to name it, attach it to a rig joint, and choose its motion and intensity. Up to 12 parts are supported.
+- The four loop-safe part motions (swing, bounce, pulse and flutter) run on the same timeline as the body, including scrubbing, playback speed, ping-pong and GIF export. A joint-bound piece follows the evaluated joint pose, including keyframes and recorded motion. A missing joint falls back to the part center.
+- This is **manual polygon cutout**, not automatic semantic segmentation or inpainting: separated pixels leave transparent holes, hidden content is not reconstructed, pieces render rigidly above the body and mouth, and overlapping regions belong to the first piece. Avoid tracing the animated mouth. The mesh, sticker outline and body deformation remain based on the complete image; edges between a rigid piece and a deforming body can separate.
+- Replacing the image or changing/resetting its crop clears parts. Background removal and outline changes are reflected in the parts. Part edits are not included in the rig/timeline undo history; delete a part to restore its pixels. Everything remains local to the browser.
+
 ### 2. Custom Pen Mouth Tool & Organic Curved Lip Sync
 - **Interactive Vector Pen Tool (`ابزار Pen`):** Built specifically for characters with crooked, tilted, asymmetric, or stylized mouths. Trace an **open curved lip seam** (`〰`) from corner to corner or close a **full lip loop** (`⬠`) using Catmull-Rom splines or sharp linear segments, with `100%–400%` stage zoom/pan, mid-edge point insertion, right-click vertex deletion, and live vowel preview.
 - **Curved Smile/Frown Seam Architecture:** Even default mouths compile into smooth Catmull-Rom arcs with an interactive middle bend handle and arch slider (`-80%` to `+80%`) rather than rigid flat lines.
@@ -70,6 +76,8 @@ Source Image (Upload / Paste / Sample)
 | Path | Responsibility |
 | :--- | :--- |
 | `src/engine/types.ts` | Core data contracts for rigs, `CustomMouthPath`, poses, meshes, timeline keyframes, and export options |
+| `src/engine/parts.ts` | Manual polygon pixel extraction, rigid part animation, and shared viewport/export rendering |
+| `src/components/PartsEditor.tsx` | Manual part tracing, joint binding and motion controls |
 | `src/engine/imageProcessor.ts` | Flood-fill background removal, color decontamination, Chamfer sticker border, crop/rotate/flip, and 18/14/12 auto-rigger |
 | `src/engine/mouthPenGeometry.ts` | Catmull-Rom spline compiler, CW/CCW corner detector, viseme rim solver, anti-ghosting lip tuck, and skin-tone sampler |
 | `src/engine/meshBuilder.ts` | Adaptive Delaunay triangulation, silhouette triangle clipping, mouth-seam vertex seeding, and Dijkstra geodesic bone weights |

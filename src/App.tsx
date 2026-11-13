@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useLayoutEffect,
   useRef,
   useState,
 } from 'react';
@@ -10,6 +11,8 @@ import { CharacterRigPanel } from './components/CharacterRigPanel';
 import { GifExportModal } from './components/GifExportModal';
 import { HeaderBar } from './components/HeaderBar';
 import { ImageCropModal } from './components/ImageCropModal';
+import { PartsEditor } from './components/PartsEditor';
+import { ImagePart, prepareParts } from './engine/parts';
 import { StageViewport } from './components/StageViewport';
 import { TimelineBar } from './components/TimelineBar';
 import {
@@ -100,6 +103,8 @@ export const App: React.FC = () => {
   const [cropSpec, setCropSpec] =
     useState<ImageTransformSpec>(DEFAULT_CROP_SPEC);
   const [isCropModalOpen, setIsCropModalOpen] = useState(false);
+  const [isPartsEditorOpen, setIsPartsEditorOpen] = useState(false);
+  const [imageParts, setImageParts] = useState<ImagePart[]>([]);
 
   const isCropActive =
     cropSpec.rotation !== 0 ||
@@ -245,6 +250,8 @@ export const App: React.FC = () => {
     stageSettings.stickerColor,
   ]);
 
+  const preparedParts = useMemo(() => prepareParts(finalImageBuffer.rgba, finalImageBuffer.width, finalImageBuffer.height, imageParts), [finalImageBuffer, imageParts]);
+
   // Step 2b: Sample surrounding face skin color for clean static-mouth concealment
   const mouthSkinColor = useMemo(() => {
     return sampleSurroundingMouthSkinColor(
@@ -271,13 +278,13 @@ export const App: React.FC = () => {
     meshRendererRef.current = new PuppetMeshRenderer();
   }
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     meshRendererRef.current?.setTexture(
-      finalImageBuffer.rgba,
+      preparedParts.base,
       finalImageBuffer.width,
       finalImageBuffer.height
     );
-  }, [finalImageBuffer]);
+  }, [finalImageBuffer, preparedParts]);
 
   // Combined live mouth override (Push-to-talk Spacebar OR Live Microphone)
   const effectiveLiveMouth: number | null = useMemo(() => {
@@ -309,7 +316,8 @@ export const App: React.FC = () => {
       toolMode === 'setup_rig' ||
       toolMode === 'pen_mouth' ||
       isExportModalOpen ||
-      isCropModalOpen
+      isCropModalOpen ||
+      isPartsEditorOpen
     ) {
       return;
     }
@@ -351,7 +359,7 @@ export const App: React.FC = () => {
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, toolMode, isExportModalOpen, isCropModalOpen]);
+  }, [isPlaying, toolMode, isExportModalOpen, isCropModalOpen, isPartsEditorOpen]);
 
   // Finalize recorded buckets into `recordedSamples` when stopping recording
   const handleToggleRecording = useCallback(() => {
@@ -390,6 +398,7 @@ export const App: React.FC = () => {
           landmarks.suggestedMode
         );
 
+        setImageParts([]);
         setActiveSampleId(null);
         setBgRemovedActive(false);
         setOriginalSourceImage(loaded);
@@ -441,6 +450,7 @@ export const App: React.FC = () => {
         cropped.height
       );
 
+      setImageParts([]);
       setCropSpec(spec);
       setRawImage(cropped);
       setDraftRig(null);
@@ -465,6 +475,7 @@ export const App: React.FC = () => {
       originalSourceImage.width,
       originalSourceImage.height
     );
+    setImageParts([]);
     setCropSpec(DEFAULT_CROP_SPEC);
     setRawImage(originalSourceImage);
     setDraftRig(null);
@@ -485,6 +496,7 @@ export const App: React.FC = () => {
       generated.customRig ||
       buildAutoRigFromLandmarks(landmarks, landmarks.suggestedMode);
 
+    setImageParts([]);
     setActiveSampleId(sample.id);
     setBgRemovedActive(false);
     setOriginalSourceImage(generated.image);
@@ -948,7 +960,7 @@ export const App: React.FC = () => {
     };
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (isTypingInField(e.target)) return;
+      if (isPartsEditorOpen || isTypingInField(e.target)) return;
 
       if (e.code === 'Space') {
         e.preventDefault();
@@ -977,7 +989,7 @@ export const App: React.FC = () => {
     };
 
     const onPaste = (e: ClipboardEvent) => {
-      if (isTypingInField(e.target)) return;
+      if (isPartsEditorOpen || isTypingInField(e.target)) return;
       const items = e.clipboardData?.items;
       if (!items) return;
       for (let i = 0; i < items.length; i++) {
@@ -1003,6 +1015,7 @@ export const App: React.FC = () => {
   }, [
     handleUndo,
     handleRedo,
+    isPartsEditorOpen,
     handleLoadUploadedFile,
     selectedKeyframeId,
     handleDeleteKeyframe,
@@ -1063,6 +1076,8 @@ export const App: React.FC = () => {
           onOpenCropModal={() => setIsCropModalOpen(true)}
           isCropActive={isCropActive}
           onResetCrop={handleResetCrop}
+          onOpenPartsEditor={() => setIsPartsEditorOpen(true)}
+          partCount={imageParts.length}
           rig={activeRig}
           onChangeRigMode={handleChangeRigMode}
           onAutoResetRig={handleAutoResetRig}
@@ -1114,6 +1129,7 @@ export const App: React.FC = () => {
             onAddCustomPinAt={handleAddCustomPinAt}
             onDropImageFile={handleLoadUploadedFile}
             mouthSkinColor={mouthSkinColor}
+            imageParts={preparedParts.layers}
           />
 
           <TimelineBar
@@ -1188,11 +1204,15 @@ export const App: React.FC = () => {
         onResetCrop={handleResetCrop}
       />
 
+      {isPartsEditorOpen && <PartsEditor image={finalImageBuffer} rig={activeRig} parts={imageParts} onChange={setImageParts} onClose={() => setIsPartsEditorOpen(false)} />}
+
       {/* GIF Export Studio Modal */}
       <GifExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
         rgba={finalImageBuffer.rgba}
+        baseRgba={preparedParts.base}
+        imageParts={preparedParts.layers}
         imgW={finalImageBuffer.width}
         imgH={finalImageBuffer.height}
         mesh={mesh}

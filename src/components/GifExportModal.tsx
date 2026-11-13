@@ -1,3 +1,4 @@
+import { PreparedPart } from '../engine/parts';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   CheckCircle2,
@@ -22,6 +23,8 @@ interface GifExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   rgba: Uint8ClampedArray;
+  baseRgba: Uint8ClampedArray;
+  imageParts: PreparedPart[];
   imgW: number;
   imgH: number;
   mesh: PuppetMesh;
@@ -44,6 +47,8 @@ export const GifExportModal: React.FC<GifExportModalProps> = ({
   isOpen,
   onClose,
   rgba,
+  baseRgba,
+  imageParts,
   imgW,
   imgH,
   mesh,
@@ -73,6 +78,8 @@ export const GifExportModal: React.FC<GifExportModalProps> = ({
   // Sync transparent default when modal opens
   useEffect(() => {
     if (isOpen) {
+      // A previous GIF may no longer match the image, rig, or parts.
+      setResult(null);
       setTransparent(stageSettings.backgroundStyle === 'transparent');
       setPingPong(animSettings.pingPong);
       setErrorMsg(null);
@@ -138,6 +145,8 @@ export const GifExportModal: React.FC<GifExportModalProps> = ({
     try {
       const exported = await renderAndExportGif({
         rgba,
+        baseRgba,
+        imageParts,
         imgW,
         imgH,
         mesh,
